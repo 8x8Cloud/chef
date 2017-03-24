@@ -1139,8 +1139,8 @@ class Chef
     # @api private
     #
     def self.action_class(&block)
-      return @action_class if @action_class && !block
-      @action_class = declare_action_class(&block)
+      @action_class ||= declare_action_class
+      @action_class.class_eval(&block) if block
       @action_class
     end
 
@@ -1156,10 +1156,8 @@ class Chef
     # Ensure the action class actually gets created. This is called
     # when the user does `action :x do ... end`.
     #
-    # If a block is passed, it is run inside the action_class.
-    #
     # @api private
-    def self.declare_action_class(&block)
+    def self.declare_action_class
       @action_class ||= begin
                           if superclass.respond_to?(:action_class)
                             base_provider = superclass.get_action_class
@@ -1172,8 +1170,6 @@ class Chef
                             self.resource_class = resource_class
                           end
                         end
-      @action_class.class_eval(&block) if block
-      @action_class
     end
 
     #
