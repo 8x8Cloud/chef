@@ -753,7 +753,7 @@ class Chef
                 arg
               end
       set_or_return(:provider, klass, kind_of: [ Class ]) ||
-        self.class.action_class
+        self.class.get_action_class
     end
 
     def provider=(arg)
@@ -1140,9 +1140,14 @@ class Chef
     #
     def self.action_class(&block)
       return @action_class if @action_class && !block
-      # If the superclass needed one, then we need one as well.
-      if block || (superclass.respond_to?(:action_class) && superclass.action_class)
-        @action_class = declare_action_class(&block)
+      @action_class = declare_action_class(&block)
+      @action_class
+    end
+
+    def self.get_action_class
+      return @action_class if @action_class
+      if superclass.respond_to?(:action_class) && superclass.get_action_class
+        @action_class = declare_action_class
       end
       @action_class
     end
@@ -1157,7 +1162,7 @@ class Chef
     def self.declare_action_class(&block)
       @action_class ||= begin
                           if superclass.respond_to?(:action_class)
-                            base_provider = superclass.action_class
+                            base_provider = superclass.get_action_class
                           end
                           base_provider ||= Chef::Provider
 
